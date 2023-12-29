@@ -1,0 +1,234 @@
+#include <stdlib.h>
+#include <stdio.h>
+#include "ocaml.h"
+
+// Linked Lists
+
+void cons(ml_term_t* n_head, ml_term_lst_t** lst) {
+    ml_term_lst_t* n_lst = malloc(sizeof(ml_term_lst_t));
+    n_lst->hd = n_head;
+    n_lst->tl = (*lst);
+    (*lst) = n_lst;
+}
+
+void free_ml_lst(ml_term_lst_t* lst) {
+    if(lst != NULL) {
+        free_ml_lst(lst->tl);
+        free_ml_term(lst->hd);
+        free(lst);
+    }
+}
+
+// Term Constructors
+
+ml_term_t* Match(ml_term_t* term, ml_term_t** patterns, ml_term_t** bodys) {
+    ml_term_t* res = malloc(sizeof(ml_term_t)); // FIXME array/lists
+    res->content.match.term = term;
+    res->content.match.patterns = patterns;
+    res->content.match.bodys = bodys;
+}
+
+ml_term_t* Let(ml_term_t* argument, bool is_rec, ml_term_t* val, ml_term_t* in) {
+    ml_term_t* res = malloc(sizeof(ml_term_t));
+    res->type = DECLARE;
+    res->content.declare.is_rec = is_rec;
+    switch(argument->type) {
+        case VARIABLE :
+            res->content.declare.var_name = argument->content.var_name;
+            res->content.declare.val = val;
+            res->content.declare.in = in;
+        break;
+        case COUPLE :
+            if(argument->content.cpl.fst->type != IDENTIFIER) {
+                fprintf(stderr, "Syntax Error : Expected an identifier");
+            } else {
+                res->content.declare.var_name = argument->content.cpl.fst->content.var_name;
+                if(val->type != COUPLE) {
+                    fprintf(stderr, "Syntax Error : Expected a tuple to assign");
+                } else {
+                    res->content.declare.val = val->content.cpl.fst;
+                    res->content.declare.in = Let(argument->content.cpl.snd, val->content.cpl.snd, in);
+                }
+            }
+        break;    
+        case LIST :
+            if(argument->content.lst.hd->type != IDENTIFIER) {
+                fprintf(stderr, "Syntax Error : Expected an identifier");
+            } else {
+                res->content.declare.var_name = argument->content.lst.hd->content.var_name;
+                if(val->type != LIST) {
+                    fprintf(stderr, "Syntax Error : Expected a tuple to assign");
+                } else {
+                    res->content.declare.val = val->content.lst.hd;
+                    res->content.declare.in = Let(argument->content.lst.tl, val->content.lst.tl, in);
+                }
+            }
+        break;
+        default :
+            fprintf("Syntax Error : Not a valid argument");
+            return;
+    }
+    return res;
+}    
+
+ml_term_t* Applml(ml_term_t* applying, ml_term_t* to) {
+    ml_term_t* res = malloc(sizeof(ml_term_t));
+    res->type = APPLML;
+    res->content.appl.applying = applying;
+    res->content.appl.to = to;
+    return res;
+}    
+
+ml_term_t* Fun(char* var_name, ml_term_t* body) {
+    ml_term_t* res = malloc(sizeof(ml_term_t));
+    res->type = FUNC;
+    res->content.func.var = var_name;
+    res->content.func.body = body;
+    return res;
+}    
+
+ml_term_t* Cpl(ml_term_t* fst, ml_term_t* snd) {
+    ml_term_t* res = malloc(sizeof(ml_term_t));
+    res->type = COUPLE;
+    res->content.cpl.fst = fst;
+    res->content.cpl.snd = snd;
+    return res;
+}     
+
+ml_term_t* List(ml_term_t* hd, ml_term_t* tl) {
+    ml_term_t* res = malloc(sizeof(ml_term_t));
+    res->type = LIST;
+    res->content.lst.hd = hd;
+    res->content.lst.tl = tl;
+    return res;
+}    
+
+ml_term_t* ArithForm(char operator, ml_term_t* lhs, ml_term_t* rhs) {
+    ml_term_t* res = malloc(sizeof(ml_term_t));
+    res->type = ARITHM_FORMULA;
+    res->content.a_form.operator = operator;
+    res->content.a_form.lhs = lhs;
+    res->content.a_form.rhs = rhs;
+    return res;
+}    
+
+ml_term_t* BoolForm(char operator, ml_term_t* lhs, ml_term_t* rhs) {
+    ml_term_t* res = malloc(sizeof(ml_term_t));
+    res->type = BOOL_FORMULA;
+    res->content.b_form.operator = operator;
+    res->content.b_form.lhs = lhs;
+    res->content.b_form.rhs = rhs;
+    return res;
+}       
+
+ml_term_t* Comparison(char* comparator, ml_term_t* lhs, ml_term_t* rhs) {
+    ml_term_t* res = malloc(sizeof(ml_term_t));
+    res->type = COMPARISON;
+    res->content.compare.operator[0] = comparator[0];
+    res->content.compare.operator[1] = comparator[1];
+    res->content.compare.lhs = lhs;
+    res->content.compare.rhs = rhs;
+    return res;
+}
+
+ml_term_t* IfThenElse(ml_term_t* cond, ml_term_t* i, ml_term_t* e) {
+    ml_term_t* res = malloc(sizeof(ml_term_t));
+    res->type = CONDITION;
+    res->content.ite.condition = cond;
+    res->content.ite.body_i = i;
+    res->content.ite.body_e = e;
+    return res;
+}
+
+ml_term_t* ml_var(char* var_name) {
+    ml_term_t* res = malloc(sizeof(ml_term_t));
+    res->type = VARIABLE;
+    res->content.var_name = var_name;
+    return res;
+}
+
+ml_term_t* ml_int(int n) {
+    ml_term_t* res = malloc(sizeof(ml_term_t));
+    res->type = CONST_INT;
+    res->content.n = n;
+    return res;
+}
+
+ml_term_t* ml_bool(bool b) {
+    ml_term_t* res = malloc(sizeof(ml_term_t));
+    res->type = CONST_BOOL;
+    res->content.b = b;
+    return res;
+}
+
+ml_term_t* ml_unit(void) {
+    ml_term_t* res = malloc(sizeof(ml_term_t));
+    res->type = CONST_UNIT;
+    return res;
+}
+
+void free_ml_term(ml_term_t* term) {
+    switch(term->type) {
+        case APPLML :
+            free_ml_term(term->content.appl.applying);
+            free_ml_term(term->content.appl.to);
+            free(term);
+        break;
+        case FUNC :
+            free_ml_term(term->content.func.body);
+            free(term);
+        break;
+        case DECLARE :
+            free_ml_term(term->content.declare.val);
+            free_ml_term(term->content.declare.in);
+            free(term);
+        break;
+        case PARENTHESIS :
+            free_ml_term(term->content.par.inside);
+            free(term);
+        break;
+        case COUPLE :
+            free_ml_term(term->content.cpl.fst);
+            free_ml_term(term->content.cpl.snd);
+            free(term);
+        break;
+        case LIST :
+            free_ml_term(term->content.lst.hd);
+            free_ml_term(term->content.lst.tl);
+            free(term);
+        break;
+        case ARITHM_FORMULA :
+            free_ml_term(term->content.a_form.lhs);
+            free_ml_term(term->content.a_form.rhs);
+            free(term);
+        break;
+        case BOOL_FORMULA :
+            free_ml_term(term->content.b_form.lhs);
+            free_ml_term(term->content.b_form.rhs);
+            free(term);
+        break;
+        case CONDITION :
+            free_ml_term(term->content.ite.condition);
+            free_ml_term(term->content.ite.body_i);
+            free_ml_term(term->content.ite.body_e);
+            free(term);
+        break;
+        case COMPARISON :
+            free_ml_term(term->content.compare.lhs);
+            free_ml_term(term->content.compare.rhs);
+            free(term);
+        break;
+        case VARIABLE :
+            free(term);
+        break;
+        case CONST_INT :
+            free(term);
+        break;
+        case CONST_BOOL :
+            free(term);
+        break;
+        case CONST_UNIT :
+            free(term);
+        break;
+    }
+}
