@@ -39,7 +39,11 @@ ml_term_t* Let(ml_term_t* argument, bool is_rec, ml_term_t* val, ml_term_t* in) 
             res->content.declare.in = in;
         break;
         case COUPLE :
-            if(argument->content.cpl.fst->type != IDENTIFIER) {
+            if(is_rec) {
+                fprintf(stderr, "Error : Only variables are allowed as left-hand side of 'let rec'");
+                return NULL;
+            }
+            if(argument->content.cpl.fst->type != VARIABLE) {
                 fprintf(stderr, "Syntax Error : Expected an identifier");
             } else {
                 res->content.declare.var_name = argument->content.cpl.fst->content.var_name;
@@ -47,12 +51,16 @@ ml_term_t* Let(ml_term_t* argument, bool is_rec, ml_term_t* val, ml_term_t* in) 
                     fprintf(stderr, "Syntax Error : Expected a tuple to assign");
                 } else {
                     res->content.declare.val = val->content.cpl.fst;
-                    res->content.declare.in = Let(argument->content.cpl.snd, val->content.cpl.snd, in);
+                    res->content.declare.in = Let(argument->content.cpl.snd, false, val->content.cpl.snd, in);
                 }
             }
         break;    
         case LIST :
-            if(argument->content.lst.hd->type != IDENTIFIER) {
+            if(is_rec) {
+                fprintf(stderr, "Error : Only variables are allowed as left-hand side of 'let rec'");
+                return NULL;
+            }
+            if(argument->content.lst.hd->type != VARIABLE) {
                 fprintf(stderr, "Syntax Error : Expected an identifier");
             } else {
                 res->content.declare.var_name = argument->content.lst.hd->content.var_name;
@@ -60,13 +68,13 @@ ml_term_t* Let(ml_term_t* argument, bool is_rec, ml_term_t* val, ml_term_t* in) 
                     fprintf(stderr, "Syntax Error : Expected a tuple to assign");
                 } else {
                     res->content.declare.val = val->content.lst.hd;
-                    res->content.declare.in = Let(argument->content.lst.tl, val->content.lst.tl, in);
+                    res->content.declare.in = Let(argument->content.lst.tl, false, val->content.lst.tl, in);
                 }
             }
         break;
         default :
-            fprintf("Syntax Error : Not a valid argument");
-            return;
+            fprintf(stderr, "Syntax Error : Not a valid argument");
+            return NULL;
     }
     return res;
 }    
@@ -101,7 +109,23 @@ ml_term_t* List(ml_term_t* hd, ml_term_t* tl) {
     res->content.lst.hd = hd;
     res->content.lst.tl = tl;
     return res;
-}    
+}
+
+ml_term_t* ConcatStr(ml_term_t* str1, ml_term_t* str2) {
+    ml_term_t* res = malloc(sizeof(ml_term_t));
+    res->type = CONCAT_STRING;
+    res->content.concat_str.str1 = str1;
+    res->content.concat_str.str2 = str2;
+    return res;
+}
+
+ml_term_t* ConcatLst(ml_term_t* lst1, ml_term_t* lst2) {
+    ml_term_t* res = malloc(sizeof(ml_term_t));
+    res->type = CONCAT_LIST;
+    res->content.concat_lst.lst1 = lst1;
+    res->content.concat_lst.lst2 = lst2;
+    return res;
+}
 
 ml_term_t* ArithForm(char operator, ml_term_t* lhs, ml_term_t* rhs) {
     ml_term_t* res = malloc(sizeof(ml_term_t));
@@ -121,7 +145,7 @@ ml_term_t* BoolForm(char operator, ml_term_t* lhs, ml_term_t* rhs) {
     return res;
 }       
 
-ml_term_t* Comparison(char* comparator, ml_term_t* lhs, ml_term_t* rhs) {
+ml_term_t* Comparison(char comparator[2], ml_term_t* lhs, ml_term_t* rhs) {
     ml_term_t* res = malloc(sizeof(ml_term_t));
     res->type = COMPARISON;
     res->content.compare.operator[0] = comparator[0];
@@ -167,6 +191,69 @@ ml_term_t* ml_unit(void) {
     return res;
 }
 
+ml_term_t* ml_constructor(token_t operator, ml_term_t* M, ml_term_t* N) {
+    char s_operator[2];
+    char c_operator;
+    if(!operator.is_finite) {
+        // Hence, it is an application : M N
+        return Applml(M, N);
+    }
+    switch(operator.val.f_val) {
+        case LESS :
+            s_operator[0] = '<'; s_operator[1] = '<';
+            return Comparison(s_operator, M, N);
+        case GREATER :
+            s_operator[0] = '>'; s_operator[1] = '>';
+            return Comparison(s_operator, M, N);
+        case LEQ :
+            s_operator[0] = '<'; s_operator[1] = '=';
+            return Comparison(s_operator, M, N);
+        case GEQ :
+            s_operator[0] = '>'; s_operator[1] = '=';
+            return Comparison(s_operator, M, N);
+        case NEQ :
+            s_operator[0] = '<'; s_operator[1] = '>';
+            return Comparison(s_operator, M, N);
+        case EQUALS :
+            s_operator[0] = '='; s_operator[1] = '=';
+            return Comparison(s_operator, M, N);
+        case PLUS :
+            c_operator = '+';
+            return ArithForm(c_operator, M, N);
+        case MINUS :
+            c_operator = '-';
+            return ArithForm(c_operator, M, N);
+        case TIMES :
+            c_operator = '*';
+            return ArithForm(c_operator, M, N);
+        case DIVIDE :
+            c_operator = '/';
+            return ArithForm(c_operator, M, N);
+        case AND :
+            c_operator = '&';
+            return BoolForm(c_operator, M, N);
+        case OR :
+            c_operator = '|';
+            return BoolForm(c_operator, M, N);
+        case DOT : // FIXME : is this a relevant case ?
+        case COMMA :
+            return NULL;
+        case COLON :
+            return NULL;
+        case SEMICOLON :
+            // The purity of lambda-calculus gives this relation, problem : printing function and so on
+            return N;
+        case CONCAT_LST :
+            return ConcatLst(M, N);
+        case CONCAT_STR :
+            return ConcatStr(M, N);
+        case CONS :
+            return List(M, N);
+        default : // Hence, it is an application : M N
+            return Applml(M, N);
+    }
+}
+
 void free_ml_term(ml_term_t* term) {
     switch(term->type) {
         case APPLML :
@@ -181,10 +268,6 @@ void free_ml_term(ml_term_t* term) {
         case DECLARE :
             free_ml_term(term->content.declare.val);
             free_ml_term(term->content.declare.in);
-            free(term);
-        break;
-        case PARENTHESIS :
-            free_ml_term(term->content.par.inside);
             free(term);
         break;
         case COUPLE :
@@ -229,6 +312,19 @@ void free_ml_term(ml_term_t* term) {
         break;
         case CONST_UNIT :
             free(term);
+        break;
+        case CONCAT_LIST :
+            free_ml_term(term->content.concat_lst.lst1);
+            free_ml_term(term->content.concat_lst.lst2);
+            free(term);
+        break;
+        case CONCAT_STRING :
+            free_ml_term(term->content.concat_str.str1);
+            free_ml_term(term->content.concat_str.str2);
+            free(term);
+        break;
+        case MATCH :
+            
         break;
     }
 }

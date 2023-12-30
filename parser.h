@@ -6,10 +6,10 @@
 #define PARSER_H
 
 typedef enum stop_cond {
-    IN,
-    SEMICOLON,
-    THEN,
-    END_PARENTHESIS
+    STOP_IN,
+    STOP_SEMICOLON,
+    STOP_THEN,
+    STOP_END_PARENTHESIS
 } stop_cond_t;
 
 ml_term_t* parser(token_t* lexed_code, int* pos, int n);

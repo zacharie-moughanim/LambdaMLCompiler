@@ -1,4 +1,4 @@
-#define N_WORDS 37
+#define N_WORDS 40
 
 #include <stdlib.h>
 #include <stdio.h>
@@ -19,12 +19,14 @@ int main(int argc, char** argv) {
     "-",
     "*",
     "/",
-    "!",
     "&&",
     "||",
     "not",
     "<",
     ">",
+    "<=",
+    ">=",
+    "<>",
     "if",
     "then",
     "else",
@@ -33,18 +35,16 @@ int main(int argc, char** argv) {
     "fun",
     "->",
     "type",
-    "in", // Add while, for, done
+    "in", // TODO : Add while, for, done
     "\"",
     "begin", "end",
-    "(", ")",
-    "[", "]",
-    "{", "}",
     ".",
     ",",
     ":",
-    ":=",
-    "<-",
     ";",
+    "(", ")",
+    "[", "]", "@", "^", "::"
+    "{", "}",
     "true",
     "false"};
     token_t ml_token[N_WORDS] = {
@@ -53,12 +53,14 @@ int main(int argc, char** argv) {
     {.key = OPERATOR, .is_finite = true, .val = {MINUS}},
     {.key = OPERATOR, .is_finite = true, .val = {TIMES}},
     {.key = OPERATOR, .is_finite = true, .val = {DIVIDE}},
-    {.key = OPERATOR, .is_finite = true, .val = {DEREF}},
     {.key = OPERATOR, .is_finite = true, .val = {AND}},
     {.key = OPERATOR, .is_finite = true, .val = {OR}},
     {.key = OPERATOR, .is_finite = true, .val = {NOT}},
     {.key = OPERATOR, .is_finite = true, .val = {LESS}},
     {.key = OPERATOR, .is_finite = true, .val = {GREATER}},
+    {.key = OPERATOR, .is_finite = true, .val = {LEQ}},
+    {.key = OPERATOR, .is_finite = true, .val = {GEQ}},
+    {.key = OPERATOR, .is_finite = true, .val = {NEQ}},
     {.key = KEYWORD, .is_finite = true, .val = {IF}},
     {.key = KEYWORD, .is_finite = true, .val = {THEN}},
     {.key = KEYWORD, .is_finite = true, .val = {ELSE}},
@@ -71,18 +73,19 @@ int main(int argc, char** argv) {
     {.key = PUNCTUATION, .is_finite = true, .val = {QUOTE}},
     {.key = PUNCTUATION, .is_finite = true, .val = {BEGIN}},
     {.key = PUNCTUATION, .is_finite = true, .val = {END}},
+    {.key = PUNCTUATION, .is_finite = true, .val = {DOT}},
+    {.key = PUNCTUATION, .is_finite = true, .val = {COMMA}},
+    {.key = PUNCTUATION, .is_finite = true, .val = {COLON}},
+    {.key = PUNCTUATION, .is_finite = true, .val = {SEMICOLON}},
     {.key = PUNCTUATION, .is_finite = true, .val = {OPEN_PARENTHESIS}},
     {.key = PUNCTUATION, .is_finite = true, .val = {END_PARENTHESIS}},
     {.key = PUNCTUATION, .is_finite = true, .val = {OPEN_SQBRACKET}},
     {.key = PUNCTUATION, .is_finite = true, .val = {END_SQBRACKET}},
+    {.key = PUNCTUATION, .is_finite = true, .val = {CONCAT_LST}},
+    {.key = PUNCTUATION, .is_finite = true, .val = {CONCAT_STR}},
+    {.key = PUNCTUATION, .is_finite = true, .val = {CONS}},
     {.key = PUNCTUATION, .is_finite = true, .val = {OPEN_BRACKET}},
     {.key = PUNCTUATION, .is_finite = true, .val = {END_BRACKET}},
-    {.key = PUNCTUATION, .is_finite = true, .val = {DOT}},
-    {.key = PUNCTUATION, .is_finite = true, .val = {COMMA}},
-    {.key = PUNCTUATION, .is_finite = true, .val = {COLON}},
-    {.key = OPERATOR, .is_finite = true, .val = {REFGETS}},
-    {.key = OPERATOR, .is_finite = true, .val = {GETS}},
-    {.key = PUNCTUATION, .is_finite = true, .val = {SEMICOLON}},
     {.key = LITERAL, .is_finite = true, .val = {TRUE}},
     {.key = LITERAL, .is_finite = true, .val = {FALSE}}
     };

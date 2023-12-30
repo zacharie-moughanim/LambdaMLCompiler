@@ -21,6 +21,9 @@ typedef enum token_finite_value {
     IN,
     LESS,
     GREATER,
+    LEQ,
+    GEQ,
+    NEQ,
     IF,
     THEN,
     ELSE,
@@ -29,9 +32,9 @@ typedef enum token_finite_value {
     MINUS,
     TIMES,
     DIVIDE,
-    DEREF,
-    REFGETS,
-    GETS,
+    CONCAT_LST,
+    CONCAT_STR,
+    CONS, 
     AND,
     OR,
     NOT,
@@ -77,7 +80,7 @@ typedef struct token_list {
 
 // Syntax
 
-typedef enum ocaml_type {
+typedef enum ocaml_term_type {
     APPLML,
     FUNC,
     DECLARE,
@@ -87,15 +90,17 @@ typedef enum ocaml_type {
     CONST_UNIT,
     COUPLE,
     LIST,
+    CONCAT_LIST,
+    CONCAT_STRING,
     ARITHM_FORMULA,
     BOOL_FORMULA,
     CONDITION,
     COMPARISON,
     MATCH
-} ocaml_type_t;
+} ocaml_term_type_t;
 
 typedef struct ml_term {
-    ocaml_type_t type;
+    ocaml_term_type_t type;
     union ocaml_content {
         struct declaration {
             char* var_name;
@@ -122,6 +127,14 @@ typedef struct ml_term {
             struct ml_term* hd;
             struct ml_term* tl;
         } lst;
+        struct concat_l {
+            struct ml_term* lst1;
+            struct ml_term* lst2;
+        } concat_lst;
+        struct concat_s {
+            struct ml_term* str1;
+            struct ml_term* str2;
+        } concat_str;
         struct arithm_formula {
             char operator;
             struct ml_term* lhs;
@@ -164,18 +177,21 @@ void cons(ml_term_t* n_head, ml_term_lst_t** lst);
 
 // Constructors
 ml_term_t* Match(ml_term_t* term, ml_term_t** patterns, ml_term_t** bodys);
-ml_term_t* Let(char* var_name, bool is_rec, ml_term_t* val, ml_term_t* in);
+ml_term_t* Let(ml_term_t* var_name, bool is_rec, ml_term_t* val, ml_term_t* in);
 ml_term_t* Applml(ml_term_t* applying, ml_term_t* to);
 ml_term_t* Fun(char* var_name, ml_term_t* body);
 ml_term_t* Cpl(ml_term_t* fst, ml_term_t* snd);
 ml_term_t* List(ml_term_t* hd, ml_term_t* tl);
 ml_term_t* ArithForm(char operator, ml_term_t* lhs, ml_term_t* rhs);
 ml_term_t* BoolForm(char operator, ml_term_t* lhs, ml_term_t* rhs);
-ml_term_t* Comparison(char* comparator, ml_term_t* lhs, ml_term_t* rhs);
+ml_term_t* Comparison(char comparator[2], ml_term_t* lhs, ml_term_t* rhs);
 ml_term_t* IfThenElse(ml_term_t* cond, ml_term_t* i, ml_term_t* e);
 ml_term_t* ml_var(char* var_name);
 ml_term_t* ml_int(int n);
 ml_term_t* ml_bool(bool b);
+ml_term_t* ConcatStr(ml_term_t* str1, ml_term_t* str2);
+ml_term_t* ConcatLst(ml_term_t* lst1, ml_term_t* lst2);
+ml_term_t* ml_constructor(token_t operator, ml_term_t* M, ml_term_t* N);
 void free_ml_term(ml_term_t* term);
 
 #endif // OCAML_H
