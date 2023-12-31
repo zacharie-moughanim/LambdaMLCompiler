@@ -189,9 +189,11 @@ ml_term_t* IfThenElse(ml_term_t* cond, ml_term_t* i, ml_term_t* e);
 ml_term_t* ml_var(char* var_name);
 ml_term_t* ml_int(int n);
 ml_term_t* ml_bool(bool b);
+ml_term_t* ml_unit(void);
 ml_term_t* ConcatStr(ml_term_t* str1, ml_term_t* str2);
 ml_term_t* ConcatLst(ml_term_t* lst1, ml_term_t* lst2);
 ml_term_t* ml_constructor(token_t operator, ml_term_t* M, ml_term_t* N);
+void print_ml_term(ml_term_t* term, int indent);
 void free_ml_term(ml_term_t* term);
 
 #endif // OCAML_H

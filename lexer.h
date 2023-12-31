@@ -17,6 +17,7 @@ int lstlen(token_list_t* lst);
 token_t* lst_of_arr(token_list_t* lst, int* n);
 void free_token(token_t t);
 void free_token_arr(token_t* t, int n);
+token_list_t* concat(token_t hd, token_list_t* tl);
 void print_token(token_t tok);
 void print_token_array(token_t* t, int n);
 

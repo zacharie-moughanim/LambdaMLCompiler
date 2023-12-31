@@ -6,12 +6,12 @@
 #include "ocaml.h"
 #include "lexer.h"
 #include "parser.h"
+#include "lambda.h"
 
 int main(int argc, char** argv) {
     trie_t* ml_dict = init_trie();
     /* Ambiguous words :
-    - and ->
-    : and :=
+    : and ::
     */
     char* ml_word[N_WORDS] = {
     "=",
@@ -43,7 +43,7 @@ int main(int argc, char** argv) {
     ":",
     ";",
     "(", ")",
-    "[", "]", "@", "^", "::"
+    "[", "]", "@", "^", "::",
     "{", "}",
     "true",
     "false"};
@@ -99,11 +99,14 @@ int main(int argc, char** argv) {
         print_token_array(lexed, n);
         free_trie(ml_dict);
         int i = 0;
-        ml_term_t* parsed = parser(lexed, &i, n);
-        /*int i = 0;
-        ml_term_t* parsed = read_argument(lexed, &i, 1);*/
+        ml_term_t* parsed = parser(lexed, &i, n, STOP_EOF);
+        print_ml_term(parsed, 0);
+        lambda_term_t* code = code_gen(parsed);
+        fprintf(stderr, "\n\n\n");
+        print_lambda_term(code, 0, true);
         free_token_arr(lexed, n);
         free_ml_term(parsed);
+        free_lambda_term(code);
     }
     return 0;
 }

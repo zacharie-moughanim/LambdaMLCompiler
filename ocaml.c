@@ -22,10 +22,11 @@ void free_ml_lst(ml_term_lst_t* lst) {
 // Term Constructors
 
 ml_term_t* Match(ml_term_t* term, ml_term_t** patterns, ml_term_t** bodys) {
-    ml_term_t* res = malloc(sizeof(ml_term_t)); // FIXME array/lists
+    ml_term_t* res = malloc(sizeof(ml_term_t)); // FIXME array copy
     res->content.match.term = term;
     res->content.match.patterns = patterns;
     res->content.match.bodys = bodys;
+    return res;
 }
 
 ml_term_t* Let(ml_term_t* argument, bool is_rec, ml_term_t* val, ml_term_t* in) {
@@ -251,6 +252,97 @@ ml_term_t* ml_constructor(token_t operator, ml_term_t* M, ml_term_t* N) {
             return List(M, N);
         default : // Hence, it is an application : M N
             return Applml(M, N);
+    }
+}
+
+void print_ml_term(ml_term_t* term, int indent) {
+    for(int i = 0; i < indent; ++i) { fprintf(stderr, " "); }
+    switch(term->type) {
+        case APPLML :
+            fprintf(stderr, "@\n");
+            print_ml_term(term->content.appl.applying, indent + 1);
+            print_ml_term(term->content.appl.to, indent + 1);
+        break;
+        case FUNC :
+            fprintf(stderr, "fun\n");
+            for(int i = 0; i < indent + 1; ++i) { fprintf(stderr, " "); }
+            fprintf(stderr, "%s\n", term->content.func.var);
+            print_ml_term(term->content.func.body, indent + 1);
+        break;
+        case DECLARE :
+            fprintf(stderr, "let ");
+            if(term->content.declare.is_rec) { fprintf(stderr, "rec "); }
+            fprintf(stderr, "%s =\n", term->content.declare.var_name);
+            print_ml_term(term->content.declare.val, indent + 1);
+            fprintf(stderr, " in\n");
+            print_ml_term(term->content.declare.in, indent + 1);
+        break;
+        case COUPLE :
+            fprintf(stderr, "(");
+            print_ml_term(term->content.func.body, 0);
+            fprintf(stderr, ", ");
+            print_ml_term(term->content.func.body, 0);
+            fprintf(stderr, ")");
+        break;
+        case LIST :
+            // TODO
+        break;
+        case ARITHM_FORMULA :
+            print_ml_term(term->content.a_form.lhs, 0);
+            fprintf(stderr, " %c ", term->content.a_form.operator);
+            print_ml_term(term->content.a_form.rhs, 0);
+        break;
+        case BOOL_FORMULA :
+            print_ml_term(term->content.b_form.lhs, 0);
+            fprintf(stderr, " %c%c ", term->content.b_form.operator, term->content.b_form.operator);
+            print_ml_term(term->content.b_form.rhs, 0);
+        break;
+        case CONDITION :
+            free_ml_term(term->content.ite.condition);
+            free_ml_term(term->content.ite.body_i);
+            free_ml_term(term->content.ite.body_e);
+            free(term);
+        break;
+        case COMPARISON :
+            free_ml_term(term->content.compare.lhs);
+            free_ml_term(term->content.compare.rhs);
+            free(term);
+        break;
+        case VARIABLE :
+            fprintf(stderr,"%s", term->content.var_name);
+        break;
+        case CONST_INT :
+            fprintf(stderr, "%d", term->content.n);
+        break;
+        case CONST_BOOL :
+            char s[5];
+            if(term->content.b) {
+                s[0] = 't';
+                s[1] = 'r';
+                s[2] = 'u';
+                s[3] = 'e';
+                s[4] = 'e';
+            } else {
+                s[0] = 'f';
+                s[1] = 'a';
+                s[2] = 'l';
+                s[3] = 's';
+                s[4] = 'e';
+            }
+            fprintf(stderr, "%s", s);
+        break;
+        case CONST_UNIT :
+            fprintf(stderr, "()");
+        break;
+        case CONCAT_LIST :
+            // TODO
+        break;
+        case CONCAT_STRING :
+            // TODO
+        break;
+        case MATCH :
+            // TODO
+        break;
     }
 }
 

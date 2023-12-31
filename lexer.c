@@ -7,6 +7,13 @@
 
 // Token list methods
 
+token_list_t* concat(token_t hd, token_list_t* tl) {
+    token_list_t* n_l = malloc(sizeof(token_list_t));
+    n_l->hd = hd;
+    n_l->tl = tl;
+    return n_l;
+}
+
 void free_tok_list(token_list_t* lst) {
     if(lst != NULL) {
         free_tok_list(lst->tl);
@@ -76,6 +83,24 @@ void print_token(token_t tok) {
                 case LET :
                     val_s = "LET";
                     break;
+                case GEQ :
+                    val_s = "GEQ";
+                    break;
+                case LEQ :
+                    val_s = "LEQ";
+                    break;
+                case NEQ :
+                    val_s = "NEQ";
+                    break;
+                case CONCAT_LST :
+                    val_s = "CONCAT_LST";
+                    break;
+                case CONCAT_STR :
+                    val_s = "CONCAT_STR";
+                    break;
+                case CONS :
+                    val_s = "CONS";
+                    break;
                 case REC :
                     val_s = "REC";
                     break;
@@ -105,15 +130,6 @@ void print_token(token_t tok) {
                     break;
                 case DIVIDE :
                     val_s = "DIVIDE";
-                    break;
-                case DEREF :
-                    val_s = "DEREF";
-                    break;
-                case REFGETS :
-                    val_s = "REFGETS";
-                    break;
-                case GETS :
-                    val_s = "GETS";
                     break;
                 case AND :
                     val_s = "AND";
