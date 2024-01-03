@@ -12,12 +12,14 @@ typedef struct trie {
 } trie_t;
 
 // Token lists
+token_list_t* concat(token_t hd, token_list_t* tl);
 void free_tok_list(token_list_t* lst);
 int lstlen(token_list_t* lst);
-token_t* lst_of_arr(token_list_t* lst, int* n);
+token_t* lst_of_arr(token_list_t* lst, int* n); // n is modified to point to the length of the resulting table
 void free_token(token_t t);
 void free_token_arr(token_t* t, int n);
 token_list_t* concat(token_t hd, token_list_t* tl);
+token_list_t* tok_lst_init(void);
 void print_token(token_t tok);
 void print_token_array(token_t* t, int n);
 

@@ -340,7 +340,7 @@ void print_ml_term(ml_term_t* term, int indent) {
         case CONCAT_STRING :
             // TODO
         break;
-        case MATCH :
+        case PATTERNMATCH :
             // TODO
         break;
     }
@@ -415,7 +415,7 @@ void free_ml_term(ml_term_t* term) {
             free_ml_term(term->content.concat_str.str2);
             free(term);
         break;
-        case MATCH :
+        case PATTERNMATCH :
             
         break;
     }

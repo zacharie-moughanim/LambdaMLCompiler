@@ -2,6 +2,7 @@
 #include "ocaml.h"
 #include "lexer.h"
 #include "lambda.h"
+#include "utils.h"
 
 bool precedence(token_t op, int* prec) {
     // After this call,         prec points to the precedence value
@@ -86,14 +87,54 @@ int PrecedenceLt(token_t op1, token_t op2) {
     }
 }
 
-void pre_process(token_t* lexed_code, int n) { // convert begin/end into (/) and let f x = x into let f = fun x -> x 
+token_t* pre_process(token_t* lexed_code, int n) {
+    // convert [begin]/[end] into [(]/[)]
+    token_list_t* pre_processed_lst = tok_lst_init();
     for(int i = 0; i < n; ++i) {
         if(lexed_code[i].key == KEYWORD && lexed_code[i].val.f_val == BEGIN) {
-            lexed_code[i].val.f_val = OPEN_PARENTHESIS;
+            token_t cur;
+            cur.key = KEYWORD;
+            cur.val.f_val = OPEN_PARENTHESIS;
+            pre_processed_lst = concat(cur, pre_processed_lst);
         } else if(lexed_code[i].key == KEYWORD && lexed_code[i].val.f_val == END) {
-            lexed_code[i].val.f_val = END_PARENTHESIS;
+            token_t cur;
+            cur.key = KEYWORD;
+            cur.val.f_val = END_PARENTHESIS;
+            pre_processed_lst = concat(cur, pre_processed_lst);
+        } else if(lexed_code[i].key == KEYWORD && lexed_code[i].val.f_val == FUNMATCH) {
+            char* fresh = fresh_var(false);
+            int fresh_len = strlen(fresh);
+            token_t cur1; // fun
+            cur1.key = KEYWORD;
+            cur1.val.f_val = FUN;
+            token_t cur2; // x
+            cur2.key = IDENTIFIER;
+            cur2.val.id_name = malloc(sizeof(char)*fresh_len);
+            strcpy(fresh, cur2.val.id_name);
+            token_t cur3; // ->
+            cur3.key = KEYWORD;
+            cur3.val.f_val = MAPSTO;
+            token_t cur4; // match
+            cur4.key = KEYWORD;
+            cur4.val.f_val = MATCH;
+            token_t cur5; // x
+            cur5.key = IDENTIFIER;
+            cur5.val.id_name = malloc(sizeof(char)*fresh_len);
+            strcpy(fresh, cur5.val.id_name);
+            token_t cur6; // with
+            cur6.key = KEYWORD;
+            cur6.val.f_val = WITH;
+            pre_processed_lst = concat(cur1, pre_processed_lst);
+            pre_processed_lst = concat(cur2, pre_processed_lst);
+            pre_processed_lst = concat(cur3, pre_processed_lst);
+            pre_processed_lst = concat(cur4, pre_processed_lst);
+            pre_processed_lst = concat(cur5, pre_processed_lst);
+            pre_processed_lst = concat(cur6, pre_processed_lst);
+        } else {
+            pre_processed_lst = concat(lexed_code[i], pre_processed_lst);
         }
     }
+    return lst_of_arr(pre_processed_lst, &n);
 }
 
 void incr_pos(token_t* lexed_code, int *pos, int n) {
@@ -215,7 +256,6 @@ ml_term_t* one_parser(token_t* lexed_code, int* pos, int n) {
                 return ml_bool(false);
             default :
                 fprintf(stderr, "Syntax Error");
-                while(true) {}
                 return NULL;
         }
     } else if(lexed_code[*pos].key == IDENTIFIER) {

@@ -13,9 +13,13 @@ typedef enum token_key {
 
 typedef enum token_finite_value {
     READING_ERROR,
+    PIPE,
     LET,
     REC,
     FUN,
+    FUNMATCH,
+    MATCH,
+    WITH,
     MAPSTO,
     TYPE,
     IN,
@@ -96,7 +100,7 @@ typedef enum ocaml_term_type {
     BOOL_FORMULA,
     CONDITION,
     COMPARISON,
-    MATCH
+    PATTERNMATCH
 } ocaml_term_type_t;
 
 typedef struct ml_term {

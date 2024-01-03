@@ -1,4 +1,4 @@
-#define N_WORDS 40
+#define N_WORDS 44
 
 #include <stdlib.h>
 #include <stdio.h>
@@ -7,6 +7,7 @@
 #include "lexer.h"
 #include "parser.h"
 #include "lambda.h"
+#include "utils.h"
 
 int main(int argc, char** argv) {
     trie_t* ml_dict = init_trie();
@@ -14,6 +15,7 @@ int main(int argc, char** argv) {
     : and ::
     */
     char* ml_word[N_WORDS] = {
+    "|",
     "=",
     "+",
     "-",
@@ -33,6 +35,9 @@ int main(int argc, char** argv) {
     "let",
     "rec",
     "fun",
+    "function",
+    "match",
+    "with",
     "->",
     "type",
     "in", // TODO : Add while, for, done
@@ -48,6 +53,7 @@ int main(int argc, char** argv) {
     "true",
     "false"};
     token_t ml_token[N_WORDS] = {
+    {.key = OPERATOR, .is_finite = true, .val = {PIPE}},
     {.key = OPERATOR, .is_finite = true, .val = {EQUALS}},
     {.key = OPERATOR, .is_finite = true, .val = {PLUS}},
     {.key = OPERATOR, .is_finite = true, .val = {MINUS}},
@@ -67,6 +73,9 @@ int main(int argc, char** argv) {
     {.key = KEYWORD, .is_finite = true, .val = {LET}},
     {.key = KEYWORD, .is_finite = true, .val = {REC}},
     {.key = KEYWORD, .is_finite = true, .val = {FUN}},
+    {.key = KEYWORD, .is_finite = true, .val = {FUNMATCH}},
+    {.key = KEYWORD, .is_finite = true, .val = {MATCH}},
+    {.key = KEYWORD, .is_finite = true, .val = {WITH}},
     {.key = KEYWORD, .is_finite = true, .val = {MAPSTO}},
     {.key = KEYWORD, .is_finite = true, .val = {TYPE}},
     {.key = KEYWORD, .is_finite = true, .val = {IN}},
@@ -94,6 +103,7 @@ int main(int argc, char** argv) {
         add_word(ml_dict, ml_word[i], ml_token[i], 0);
     }
     if(argc >= 1) {
+        // TODO read a file instead of directly argv
         int n = 0;
         token_t* lexed = lexer(argv[1], ml_dict, &n);
         print_token_array(lexed, n);
@@ -107,6 +117,7 @@ int main(int argc, char** argv) {
         free_token_arr(lexed, n);
         free_ml_term(parsed);
         free_lambda_term(code);
+        fresh_var(true);
     }
     return 0;
 }

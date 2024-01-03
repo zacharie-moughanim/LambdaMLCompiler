@@ -7,6 +7,8 @@
 
 // Token list methods
 
+token_list_t* tok_lst_init(void) { return NULL; }
+
 token_list_t* concat(token_t hd, token_list_t* tl) {
     token_list_t* n_l = malloc(sizeof(token_list_t));
     n_l->hd = hd;
@@ -29,7 +31,7 @@ int lstlen(token_list_t* lst) {
     }
 }
 
-token_t* lst_of_arr(token_list_t* lst, int* n){
+token_t* lst_of_arr(token_list_t* lst, int* n) {
     *n = lstlen(lst);
     token_t* arr = malloc(*n * sizeof(token_t));
     token_list_t* cur = lst;
@@ -80,6 +82,15 @@ void print_token(token_t tok) {
         }
         if(tok.is_finite) {
             switch(tok.val.f_val) {
+                case PIPE :
+                    val_s = "PIPE";
+                    break;
+                case MATCH :
+                    val_s = "MATCH";
+                    break;
+                case WITH :
+                    val_s = "WITH";
+                    break;
                 case LET :
                     val_s = "LET";
                     break;
@@ -106,6 +117,9 @@ void print_token(token_t tok) {
                     break;
                 case FUN :
                     val_s = "FUN";
+                    break;
+                case FUNMATCH :
+                    val_s = "FUNMATCH";
                     break;
                 case MAPSTO :
                     val_s = "MAPSTO";
@@ -342,7 +356,7 @@ token_t read_a_word(char* code, trie_t* cur, int start, int* pos) {
     }
 }
 
-token_list_t* lexer_list(char* code, trie_t* dict, int pos) { // FIXME reading '*x' as (IDENTIFIER, *x)
+token_list_t* lexer_list(char* code, trie_t* dict, int pos) { // FIXME not do that : {reading '*x' as (IDENTIFIER, *x)}
     // Eliminating unused characters
     while(code[pos] == ' ' || code[pos] == '\n') {
         ++pos;

@@ -4,6 +4,9 @@
 #include "ocaml.h"
 #include "lexer.h"
 #include "parser.h"
+#include "utils.h"
+
+// TODO FRESH_VAR !!!!!!!!!!!!!!!!!!!!!!!!!!!
 
 void free_lambda_term(lambda_term_t* T) {
     switch(T->type) {
@@ -69,7 +72,10 @@ lambda_term_t* Appl(lambda_term_t* applying, lambda_term_t* to) {
 // Recursive functions
 
 lambda_term_t* Omega_f(char* f_name) {
-    return Appl(Lambda("x", Appl(Appl(Var(f_name), Var("x")), Var("x"))), Lambda("x", Appl(Appl(Var(f_name), Var("x")), Var("x"))));
+    char* tmp_var = fresh_var(false);
+    char* var = malloc(sizeof(char)*strlen(tmp_var));
+    strcpy(tmp_var, var);
+    return Appl(Lambda(var, Appl(Appl(Var(f_name), Var(var)), Var(var))), Lambda(var, Appl(Appl(Var(f_name), Var(var)), Var(var))));
 }
 
 lambda_term_t* Y(char* f_name) {
@@ -78,7 +84,7 @@ lambda_term_t* Y(char* f_name) {
 
 // Boolean functions
 
-lambda_term_t* lambda_bool(bool b) {
+lambda_term_t* lambda_bool(bool b) { // TODO check if it is pertinent to change t and e by fresh variables...
     if(b) {
         return Lambda("t", Lambda("e", Var("t")));
     } else {
@@ -87,11 +93,26 @@ lambda_term_t* lambda_bool(bool b) {
 }
 
 lambda_term_t* Not(void) {
-    return Lambda("b", Lambda("t", Lambda("e", Appl(Appl(Var("b"), Var("e")), Var("t")))));
+    char* tmp_var1 = fresh_var(false);
+    char* var1 = malloc(sizeof(char)*strlen(tmp_var1));
+    strcpy(tmp_var1, var1);
+    char* tmp_var2 = fresh_var(false);
+    char* var2 = malloc(sizeof(char)*strlen(tmp_var2));
+    strcpy(tmp_var2, var2);
+    char* tmp_var3 = fresh_var(false);
+    char* var3 = malloc(sizeof(char)*strlen(tmp_var3));
+    strcpy(tmp_var3, var3);
+    return Lambda(var1, Lambda(var2, Lambda(var3, Appl(Appl(Var(var1), Var(var3)), Var(var2)))));
 }
 
 lambda_term_t* Not_applied(lambda_term_t* b) {
-    return Lambda("t", Lambda("e", Appl(Appl(b, Var("e")), Var("t"))));
+    char* tmp_var1 = fresh_var(false);
+    char* var1 = malloc(sizeof(char)*strlen(tmp_var1));
+    strcpy(tmp_var1, var1);
+    char* tmp_var2 = fresh_var(false);
+    char* var2 = malloc(sizeof(char)*strlen(tmp_var2));
+    strcpy(tmp_var2, var2);
+    return Lambda(var1, Lambda(var2, Appl(Appl(b, Var(var2)), Var(var1))));
 }
 
 // Integer functions
@@ -106,7 +127,13 @@ lambda_term_t* f_itere(int k, char* func_name, char* var_name) {
 }
 
 lambda_term_t* lambda_int(int n) {
-    return Lambda("f", Lambda("x", f_itere(n, "f", "x")));
+    char* tmp_var1 = fresh_var(false);
+    char* var1 = malloc(sizeof(char)*strlen(tmp_var1));
+    strcpy(tmp_var1, var1);
+    char* tmp_var2 = fresh_var(false);
+    char* var2 = malloc(sizeof(char)*strlen(tmp_var2));
+    strcpy(tmp_var2, var2);
+    return Lambda(var1, Lambda(var2, f_itere(n, var1, var2)));
 }
 
 lambda_term_t* Eqz(lambda_term_t* n) {
@@ -114,54 +141,174 @@ lambda_term_t* Eqz(lambda_term_t* n) {
 }
 
 lambda_term_t* Incr(void) {
-    return Lambda("k", Lambda("f", Lambda("x", Appl(Var("f"), Appl(Appl(Var("k"), Var("f")), Var("x"))))));
+    char* tmp_var1 = fresh_var(false);
+    char* var1 = malloc(sizeof(char)*strlen(tmp_var1));
+    strcpy(tmp_var1, var1);
+    char* tmp_var2 = fresh_var(false);
+    char* var2 = malloc(sizeof(char)*strlen(tmp_var2));
+    strcpy(tmp_var2, var2);
+    char* tmp_var3 = fresh_var(false);
+    char* var3 = malloc(sizeof(char)*strlen(tmp_var3));
+    strcpy(tmp_var3, var3);
+    return Lambda(var1, Lambda(var2, Lambda(var3, Appl(Var(var2), Appl(Appl(Var(var1), Var(var2)), Var(var3))))));
 }
 
 lambda_term_t* Incr_param(char* int_name) {
-    return Lambda("f", Lambda("x", Appl(Var("f"), Appl(Appl(Var(int_name), Var("f")), Var("x")))));
+    char* tmp_var1 = fresh_var(false);
+    char* var1 = malloc(sizeof(char)*strlen(tmp_var1));
+    strcpy(tmp_var1, var1);
+    char* tmp_var2 = fresh_var(false);
+    char* var2 = malloc(sizeof(char)*strlen(tmp_var2));
+    strcpy(tmp_var2, var2);
+    return Lambda(var1, Lambda(var2, Appl(Var(var1), Appl(Appl(Var(int_name), Var(var1)), Var(var2)))));
 }
 
 lambda_term_t* Decr(void) {
-    return Lambda("n", Appl(lambda_bool(true), Appl(Appl(Var("n"),
-    Lambda("c", Appl(Var("c"), Lambda("x", Lambda("y", Lambda("z", Appl(Appl(Var("z"), Incr_param("y")), Var("y")))))))),
-    Lambda("z", Appl(Appl(Var("z"), lambda_int(0)), lambda_int(0))))));
+    char* tmp_var1 = fresh_var(false);
+    char* var1 = malloc(sizeof(char)*strlen(tmp_var1));
+    strcpy(tmp_var1, var1);
+    char* tmp_var2 = fresh_var(false);
+    char* var2 = malloc(sizeof(char)*strlen(tmp_var2));
+    strcpy(tmp_var2, var2);
+    char* tmp_var3 = fresh_var(false);
+    char* var3 = malloc(sizeof(char)*strlen(tmp_var3));
+    strcpy(tmp_var3, var3);
+    char* tmp_var4 = fresh_var(false);
+    char* var4 = malloc(sizeof(char)*strlen(tmp_var4));
+    strcpy(tmp_var4, var4);
+    char* tmp_var5 = fresh_var(false);
+    char* var5 = malloc(sizeof(char)*strlen(tmp_var5));
+    strcpy(tmp_var5, var5);
+    return Lambda(var1, Appl(lambda_bool(true), Appl(Appl(Var(var1),
+    Lambda(var2, Appl(Var(var2), Lambda(var3, Lambda(var4, Lambda(var5, Appl(Appl(Var(var5), Incr_param(var4)), Var(var4)))))))),
+    Lambda(var5, Appl(Appl(Var(var5), lambda_int(0)), lambda_int(0))))));
 }
 
-lambda_term_t* Plus(lambda_term_t* n, lambda_term_t* m) {
+lambda_term_t* PlusN(lambda_term_t* n, lambda_term_t* m) {
     return Appl(Appl(n, Incr()), m);
 }
 
-lambda_term_t* Minus(lambda_term_t* n, lambda_term_t* m) {
+lambda_term_t* MinusN(lambda_term_t* n, lambda_term_t* m) {
     return Appl(Appl(m, Decr()), n);
 }
 
+lambda_term_t* MultN(lambda_term_t* n, lambda_term_t* m) {
+    char* tmp_var1 = fresh_var(false);
+    char* var1 = malloc(sizeof(char)*strlen(tmp_var1));
+    strcpy(tmp_var1, var1);
+    char* tmp_var2 = fresh_var(false);
+    char* var2 = malloc(sizeof(char)*strlen(tmp_var2));
+    strcpy(tmp_var2, var2);
+    return Lambda(var1, Lambda(var2, Appl(Appl(m, Lambda(var2, PlusN(n, Var(var2)))), lambda_int(0))));
+}
+
+lambda_term_t* DivN(lambda_term_t* n, lambda_term_t* m) { // TODO
+    return NULL;
+}
+
+lambda_term_t* PlusZ(lambda_term_t* n, lambda_term_t* m) {
+    char* tmp_var1 = fresh_var(false);
+    char* var1 = malloc(sizeof(char)*strlen(tmp_var1));
+    strcpy(tmp_var1, var1);
+    char* tmp_var2 = fresh_var(false);
+    char* var2 = malloc(sizeof(char)*strlen(tmp_var2));
+    strcpy(tmp_var2, var2);
+    char* tmp_var3 = fresh_var(false);
+    char* var3 = malloc(sizeof(char)*strlen(tmp_var3));
+    strcpy(tmp_var3, var3);
+    return Appl(n, Lambda(var1, Lambda(var2, Lambda(var3, Appl(Appl(Var(var3), PlusN(Var(var1), Appl(lambda_bool(true), m))), PlusN(Var(var2), Appl(lambda_bool(false), m)))))));
+}
+
+lambda_term_t* MinusZ(lambda_term_t* n, lambda_term_t* m) {
+    char* tmp_var1 = fresh_var(false);
+    char* var1 = malloc(sizeof(char)*strlen(tmp_var1));
+    strcpy(tmp_var1, var1);
+    char* tmp_var2 = fresh_var(false);
+    char* var2 = malloc(sizeof(char)*strlen(tmp_var2));
+    strcpy(tmp_var2, var2);
+    char* tmp_var3 = fresh_var(false);
+    char* var3 = malloc(sizeof(char)*strlen(tmp_var3));
+    strcpy(tmp_var3, var3);
+    return PlusZ(n, Appl(m, Lambda(var1, Lambda(var2, Lambda(var3, Appl(Appl(Var(var3), Var(var2)), Var(var1)))))));
+}
+
+lambda_term_t* MultZ(lambda_term_t* n, lambda_term_t* m) {
+    char* tmp_var1 = fresh_var(false);
+    char* var1 = malloc(sizeof(char)*strlen(tmp_var1));
+    strcpy(tmp_var1, var1);
+    char* tmp_var2 = fresh_var(false);
+    char* var2 = malloc(sizeof(char)*strlen(tmp_var2));
+    strcpy(tmp_var2, var2);
+    char* tmp_var3 = fresh_var(false);
+    char* var3 = malloc(sizeof(char)*strlen(tmp_var3));
+    strcpy(tmp_var3, var3);
+    char* tmp_var4 = fresh_var(false);
+    char* var4 = malloc(sizeof(char)*strlen(tmp_var4));
+    strcpy(tmp_var4, var4);
+    char* tmp_var5 = fresh_var(false);
+    char* var5 = malloc(sizeof(char)*strlen(tmp_var5));
+    strcpy(tmp_var5, var5);
+    return Appl(n,
+                Appl(m,
+                    Lambda(var1, Lambda(var2, Lambda(var3, Lambda(var4, Lambda(var5,
+                        Appl(
+                            Appl(Var(var5), PlusN(MultN(Var(var1), Var(var3)), MultN(Var(var2), Var(var4))))
+                                         , PlusN(MultN(Var(var2), Var(var3)), MultN(Var(var1), Var(var4)))
+                            )
+                          )))))
+                    )
+               );
+}
+
+lambda_term_t* DivZ(lambda_term_t* n, lambda_term_t* m) { // TODO
+    return NULL;
+}
+
 lambda_term_t* EqN(lambda_term_t* n, lambda_term_t* m) {
-    return Appl(Appl(Eqz(Minus(n, m)), Eqz(Minus(m, n))), lambda_bool(false));
+    return Appl(Appl(Eqz(MinusN(n, m)), Eqz(MinusN(m, n))), lambda_bool(false));
 }
 
 lambda_term_t* LeqN(lambda_term_t* n, lambda_term_t* m) {
-    return Eqz(Minus(n, m));
+    return Eqz(MinusN(n, m));
 }
 
 lambda_term_t* EqZ(lambda_term_t* n, lambda_term_t* m) {
-    return Appl(n, Lambda("x", Lambda("y", Appl(Appl(Eqz(Var("x")),
-                                                EqN(Var("y"), Appl(lambda_bool(false), m))), 
-                                                EqN(Var("x"), Appl(lambda_bool(true), m)))
+    char* tmp_var1 = fresh_var(false);
+    char* var1 = malloc(sizeof(char)*strlen(tmp_var1));
+    strcpy(tmp_var1, var1);
+    char* tmp_var2 = fresh_var(false);
+    char* var2 = malloc(sizeof(char)*strlen(tmp_var2));
+    strcpy(tmp_var2, var2);
+    return Appl(n, Lambda(var1, Lambda(var2, Appl(Appl(Eqz(Var(var1)),
+                                                EqN(Var(var2), Appl(lambda_bool(false), m))), 
+                                                EqN(Var(var1), Appl(lambda_bool(true), m)))
                                      )));
 }
 
 lambda_term_t* LeqZ(lambda_term_t* n, lambda_term_t* m) {
+    char* tmp_var1 = fresh_var(false);
+    char* var1 = malloc(sizeof(char)*strlen(tmp_var1));
+    strcpy(tmp_var1, var1);
+    char* tmp_var2 = fresh_var(false);
+    char* var2 = malloc(sizeof(char)*strlen(tmp_var2));
+    strcpy(tmp_var2, var2);
     return
-    Appl(n, Lambda("x", Lambda("y", Appl(Appl(Eqz(Var("x")),
-                                         LeqN(Appl(lambda_bool(true), m), Var("y"))), 
-                                         LeqN(Var("x"), Appl(lambda_bool(false), m))))));
+    Appl(n, Lambda(var1, Lambda(var2, Appl(Appl(Eqz(Var(var1)),
+                                         LeqN(Appl(lambda_bool(true), m), Var(var2))), 
+                                         LeqN(Var(var1), Appl(lambda_bool(false), m))))));
 }
 
 lambda_term_t* LtZ(lambda_term_t* n, lambda_term_t* m) {
+    char* tmp_var1 = fresh_var(false);
+    char* var1 = malloc(sizeof(char)*strlen(tmp_var1));
+    strcpy(tmp_var1, var1);
+    char* tmp_var2 = fresh_var(false);
+    char* var2 = malloc(sizeof(char)*strlen(tmp_var2));
+    strcpy(tmp_var2, var2);
     return
-    Appl(n, Lambda("x", Lambda("y", Appl(Appl(Eqz(Var("x")),
-                                         LeqN(Appl(Incr(), Appl(lambda_bool(true), m)), Var("y"))), 
-                                         LeqN(Incr_param("x"), Appl(lambda_bool(false), m))))));
+    Appl(n, Lambda(var1, Lambda(var2, Appl(Appl(Eqz(Var(var1)),
+                                         LeqN(Appl(Incr(), Appl(lambda_bool(true), m)), Var(var2))), 
+                                         LeqN(Incr_param(var1), Appl(lambda_bool(false), m))))));
 }
 
 lambda_term_t* LConcatStr(void) { return NULL; } // TODO
@@ -173,21 +320,28 @@ lambda_term_t* LConcatLst(void) { return NULL; } // TODO
 lambda_term_t* ignore(int n, lambda_term_t* t) { // n the number of arguments, between 0 and 9 to be ignored and t the body of the ignore abstraction (independent from argument)
     if(n == 0) {
         return t;
-    } else {
-        char* var = malloc(sizeof(char));
-        var[0] = '0' + n;
+        } else {
+        char* tmp_var = fresh_var(false);
+        char* var = malloc(sizeof(char)*strlen(tmp_var));
+        strcpy(tmp_var, var);
         return Lambda(var, ignore(n - 1, t));
     }
 }
 
-lambda_term_t* pattern_matching(built_in_pseudo_type_t type, lambda_term_t* t, lambda_term_t* C) {
+lambda_term_t* pattern_matching(built_in_pseudo_type_t type, lambda_term_t* t, lambda_term_t* C) { // For a case like : | t -> C
     switch(type) {
         case L_LIST :
             return Appl(Appl(Appl(Appl(t, ignore(2, lambda_bool(false))), ignore(2, lambda_bool(false))), ignore(2, lambda_bool(false))), C);
         case L_CPL :
-            return Appl(Appl(Appl(Appl(t, ignore(2, lambda_bool(false))), ignore(2, lambda_bool(false))), Lambda("x", C)), lambda_bool(false));
+            char* tmp_var = fresh_var(false);
+            char* var = malloc(sizeof(char)*strlen(tmp_var));
+            strcpy(tmp_var, var);
+            return Appl(Appl(Appl(Appl(t, ignore(2, lambda_bool(false))), ignore(2, lambda_bool(false))), Lambda(var, C)), lambda_bool(false));
         case L_BOOL :
-            return Appl(Appl(Appl(Appl(Appl(Appl(t, ignore(3, lambda_bool(false))), ignore(2, lambda_bool(false))), lambda_bool(false)), Lambda("f", Var("f"))), C), lambda_bool("false"));
+            char* tmp_var = fresh_var(false);
+            char* var = malloc(sizeof(char)*strlen(tmp_var));
+            strcpy(tmp_var, var);
+            return Appl(Appl(Appl(Appl(Appl(Appl(t, ignore(3, lambda_bool(false))), ignore(2, lambda_bool(false))), lambda_bool(false)), Lambda(var, Var(var))), C), lambda_bool(false));
     }
     return NULL;
 }
@@ -214,29 +368,44 @@ lambda_term_t* code_gen(ml_term_t* parsed_code) {
                 return Lambda("z", Appl(Appl(Var("z"), lambda_int(parsed_code->content.n)), lambda_int(0)));
             }
         case CONST_BOOL :
-            if(parsed_code->content.b) {
-                return Lambda("t", Lambda("e", Var("t")));
-            } else {
-                return Lambda("t", Lambda("e", Var("e")));
-            }
+            lambda_bool(parsed_code->content.b);
         case CONST_UNIT :
-            return NULL; // TODO
+            return lambda_bool(false);
         case COUPLE :
-            return Appl(Appl(Var("z"), code_gen(parsed_code->content.cpl.fst)), code_gen(parsed_code->content.cpl.snd));
+            char* tmp_var = fresh_var(false);
+            char* var = malloc(sizeof(char)*strlen(tmp_var));
+            strcpy(tmp_var, var);
+            return Appl(Appl(Var(var), code_gen(parsed_code->content.cpl.fst)), code_gen(parsed_code->content.cpl.snd));
         case LIST :
             if(parsed_code->content.lst.hd == NULL) {
-                return Lambda("c", Lambda("n", Var("n")));
+                return lambda_bool(false);
             } else {
-                return Lambda("c", 
-                            Lambda("n", Appl(Appl(Var("c"), code_gen(parsed_code->content.lst.hd)),
-                                             Appl(Appl(code_gen(parsed_code->content.lst.tl), Var("c")), Var("n")))));
+                char* tmp_var1 = fresh_var(false);
+                char* var1 = malloc(sizeof(char)*strlen(tmp_var1));
+                strcpy(tmp_var1, var1);
+                char* tmp_var2 = fresh_var(false);
+                char* var2 = malloc(sizeof(char)*strlen(tmp_var2));
+                strcpy(tmp_var2, var);
+                return Lambda(var1, 
+                            Lambda(var2, Appl(Appl(Var(var1), code_gen(parsed_code->content.lst.hd)),
+                                             Appl(Appl(code_gen(parsed_code->content.lst.tl), Var(var1)), Var(var2)))));
             }
         case ARITHM_FORMULA : // TODO implement arithmetic operation
+            switch(parsed_code->content.a_form.operator) {
+                case '+' :
+                return NULL;
+                case '-' :
+                return NULL;
+                case '*' :
+                return NULL;
+                case '/' :
+                return NULL;
+            }
         case BOOL_FORMULA :
             if(parsed_code->content.b_form.operator == '|') {
-                return Appl(Appl(code_gen(parsed_code->content.b_form.lhs), Lambda("t", Lambda("e", Var("t")))), code_gen(parsed_code->content.b_form.rhs));
+                return Appl(Appl(code_gen(parsed_code->content.b_form.lhs), lambda_bool(true)), code_gen(parsed_code->content.b_form.rhs));
             } else {
-                return Appl(Appl(code_gen(parsed_code->content.b_form.lhs), code_gen(parsed_code->content.b_form.rhs)), Lambda("t", Lambda("e", Var("t"))));
+                return Appl(Appl(code_gen(parsed_code->content.b_form.lhs), code_gen(parsed_code->content.b_form.rhs)), lambda_bool(true));
             }
         case CONDITION :
             return Appl(Appl(code_gen(parsed_code->content.ite.condition), code_gen(parsed_code->content.ite.body_i)), code_gen(parsed_code->content.ite.body_e));
@@ -257,14 +426,20 @@ lambda_term_t* code_gen(ml_term_t* parsed_code) {
                 fprintf(stderr, "Error : Comparator invalid");
                 return NULL;
             }
-        case MATCH :
+        case PATTERNMATCH :
             switch(parsed_code->content.match.patterns[0]->type) { // TODO complete
                 case LIST :
+                    break;
                 case COUPLE :
+                    break;
                 case VARIABLE :
+                    break;
                 case CONST_INT :
+                    break;
                 case CONST_BOOL :
+                    break;
                 case CONST_UNIT :
+                    break;
                 default :
                     fprintf(stderr, "Error : Pattern invalid");
                     return NULL;
