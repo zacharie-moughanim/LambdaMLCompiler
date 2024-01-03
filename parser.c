@@ -177,7 +177,8 @@ ml_term_t* one_parser(token_t* lexed_code, int* pos, int n) {
                     // read arg
                     ml_term_t* val = parser(lexed_code, pos, n, STOP_IN);
                     ml_term_t* in = parser(lexed_code, pos, n, STOP_SEMICOLON);
-                    return Let(argument, is_rec, val, in);
+                    ml_term_t* res = Let(argument, is_rec, val, in);
+                    return res;
                 } else {
                     fprintf(stderr, "BONSOIR\n");
                     incr_pos(lexed_code, pos, n);
@@ -256,6 +257,7 @@ ml_term_t* one_parser(token_t* lexed_code, int* pos, int n) {
                 return ml_bool(false);
             default :
                 fprintf(stderr, "Syntax Error");
+                while(true) {}
                 return NULL;
         }
     } else if(lexed_code[*pos].key == IDENTIFIER) {
@@ -265,7 +267,7 @@ ml_term_t* one_parser(token_t* lexed_code, int* pos, int n) {
         incr_pos(lexed_code, pos, n);
         return ml_int(lexed_code[*pos - 1].val.n);
     }
-    fprintf(stderr, "Go see end of parse_one function");
+    fprintf(stderr, "Go see end of parse_one function"); // TODO copy string ! ! ! ! !
     return NULL;
 }
 

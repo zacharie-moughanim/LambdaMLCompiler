@@ -1,5 +1,6 @@
 #include <stdlib.h>
 #include <stdio.h>
+#include <string.h>
 #include "ocaml.h"
 
 // Linked Lists
@@ -168,7 +169,13 @@ ml_term_t* IfThenElse(ml_term_t* cond, ml_term_t* i, ml_term_t* e) {
 ml_term_t* ml_var(char* var_name) {
     ml_term_t* res = malloc(sizeof(ml_term_t));
     res->type = VARIABLE;
-    res->content.var_name = var_name;
+    res->content.var_name = malloc(sizeof(char)*(strlen(var_name)+1));
+    int i = 0;
+    while(var_name[i] != '\0') {
+        res->content.var_name[i] = var_name[i];
+        ++i;
+    }
+    res->content.var_name[i] = '\0';
     return res;
 }
 
@@ -238,7 +245,7 @@ ml_term_t* ml_constructor(token_t operator, ml_term_t* M, ml_term_t* N) {
             return BoolForm(c_operator, M, N);
         case DOT : // FIXME : is this a relevant case ?
         case COMMA :
-            return NULL;
+            return Cpl(M, N);
         case COLON :
             return NULL;
         case SEMICOLON :
@@ -279,9 +286,9 @@ void print_ml_term(ml_term_t* term, int indent) {
         break;
         case COUPLE :
             fprintf(stderr, "(");
-            print_ml_term(term->content.func.body, 0);
+            print_ml_term(term->content.cpl.fst, 0);
             fprintf(stderr, ", ");
-            print_ml_term(term->content.func.body, 0);
+            print_ml_term(term->content.cpl.snd, 0);
             fprintf(stderr, ")");
         break;
         case LIST :
@@ -358,6 +365,7 @@ void free_ml_term(ml_term_t* term) {
             free(term);
         break;
         case DECLARE :
+            free(term->content.declare.var_name);
             free_ml_term(term->content.declare.val);
             free_ml_term(term->content.declare.in);
             free(term);
@@ -394,6 +402,7 @@ void free_ml_term(ml_term_t* term) {
             free(term);
         break;
         case VARIABLE :
+            free(term->content.var_name);
             free(term);
         break;
         case CONST_INT :

@@ -1,6 +1,8 @@
 #ifndef UTILS_H
 #define UTILS_H
 
+#include <stdbool.h>
+
 typedef struct str_lst {
     char* hd;
     struct str_lst* tl;

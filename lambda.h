@@ -4,6 +4,7 @@
 #include <stdlib.h>
 #include <stdio.h>
 #include <string.h>
+#include "ocaml.h"
 
 
 typedef enum built_in_pseudo_type {
@@ -38,6 +39,11 @@ typedef struct lambda {
         } abst;
     } content;
 } lambda_term_t;
+
+// Lambda term constructor
+lambda_term_t* Var(char* var_name);
+lambda_term_t* Lambda(char* var_name, lambda_term_t* body);
+lambda_term_t* Appl(lambda_term_t* applying, lambda_term_t* to);
 
 lambda_term_t* code_gen(ml_term_t* parsed_code);
 void free_lambda_term(lambda_term_t* T);

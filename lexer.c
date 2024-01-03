@@ -1,5 +1,6 @@
 #include <stdlib.h>
 #include <stdio.h>
+#include <stdbool.h>
 #include <string.h>
 #include <math.h>
 #include "ocaml.h"
@@ -349,6 +350,8 @@ token_t read_a_word(char* code, trie_t* cur, int start, int* pos) {
             if(cur == NULL) {
                 ++(*pos);
                 return read_a_word(code, NULL, start, pos);
+            } else if(cur->final) {
+                return cur->read_token;
             } else {
                 return read_a_word(code, cur->next[(int)code[(*pos)++] + 128], start, pos);
             }
@@ -364,15 +367,22 @@ token_list_t* lexer_list(char* code, trie_t* dict, int pos) { // FIXME not do th
 
     // Eliminating comments
     if(code[pos] == '(' && code[pos + 1] == '*') {
-        ++pos;
-        while(!(code[pos] == '*' && code[pos + 1] == ')') && code[pos+1] != '\0') ++pos;
-        if(code[pos + 1] == '\0') {
-            fprintf(stderr, "Unmatched open comment\n");
-            return NULL;
-        } else {
-            pos += 2; // Well parenthesized comment
-            return lexer_list(code, dict, pos);
+        pos += 2;
+        bool end = false;
+        while(code[pos] != '\0' && !end) {
+            if(code[pos + 1] == '\0') {
+                fprintf(stderr, "Unmatched open comment\n");
+                return NULL;
+            } else {
+                if(code[pos] == '*' && code[pos + 1] == ')') {
+                    pos += 2;
+                    end = true;
+                } else {
+                    ++pos;
+                }
+            }
         }
+        return lexer_list(code, dict, pos);
     }
     if(code[pos] == '*' && code[pos + 1] ==   ')') {
         fprintf(stderr, "Unmatched closed comment\n");
