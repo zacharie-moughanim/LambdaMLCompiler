@@ -15,6 +15,10 @@ int main(int argc, char** argv) {
         trie_t* ml_dict = init_trie();
         /* Ambiguous words :
         : and ::
+        - and ->
+        | and ||
+        < and <=
+        > and >=
         */
         char* ml_word[N_WORDS] = {
         "|",
@@ -118,8 +122,9 @@ int main(int argc, char** argv) {
         fprintf(stderr, "\n\n\n_________________________________________________________\n");
         print_lambda_term(code, 0, true);
         fprintf(stderr,"\n_________________________________________________________\n");
-        lambda_term_t* value = lambda_interpreter(code);
+        lambda_term_t* value = lambda_interpreter(lambda_copy(code));
         print_lambda_term(value, 0, true);
+        fprintf(stderr,"\n");
         free_token_arr(lexed, n);
         free_ml_term(parsed);
         free_lambda_term(code);

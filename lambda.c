@@ -7,48 +7,71 @@
 #include "utils.h"
 
 void free_lambda_term(lambda_term_t* T) {
-    switch(T->type) {
-        case APPL :
-            free_lambda_term(T->content.appl.applying);
-            free_lambda_term(T->content.appl.to);
-            free(T);
-            break;
-        case ABSTR :
-            free_lambda_term(T->content.abst.body);
-            free(T->content.abst.var_name);
-            free(T);
-            break;
-        case VAR :
-            free(T->content.var_name);
-            free(T);
-            break;
+    if(T != NULL) {
+        switch(T->type) {
+            case APPL :
+                free_lambda_term(T->content.appl.applying);
+                free_lambda_term(T->content.appl.to);
+                free(T);
+                break;
+            case ABSTR :
+                free_lambda_term(T->content.abst.body);
+                free(T->content.abst.var_name);
+                free(T);
+                break;
+            case VAR :
+                free(T->content.var_name);
+                free(T);
+                break;
+        }
     }
 }
 
-void print_lambda_term(lambda_term_t* T, int indent, bool shift) {
-    if(shift) { for(int i = 0; i < indent; ++i) { fprintf(stderr, "     "); } }
-    switch(T->type) {
-        case APPL :
-            fprintf(stderr, "@\n");
-            print_lambda_term(T->content.appl.applying, indent + 1, true);
-            fprintf(stderr, "\n");
-            print_lambda_term(T->content.appl.to, indent + 1, true);
-            break;
-        case ABSTR :
-            fprintf(stderr, "^ %s", T->content.abst.var_name);
-            int delta = 1;
-            lambda_term_t* cur = T->content.abst.body;
-            while(cur->type == ABSTR) {
-                ++delta;
-                fprintf(stderr, ", %s", cur->content.abst.var_name);
-                cur = cur->content.abst.body;
-            }
-            fprintf(stderr, ".");
-            print_lambda_term(cur, indent + delta, false);
-            break;
+lambda_term_t* lambda_copy(lambda_term_t* M) {
+    if(M == NULL) {
+        return NULL;
+    }
+    lambda_term_t* res;
+    switch(M->type) {
         case VAR :
-            fprintf(stderr, "%s", T->content.var_name);
-            break;
+            res = Var(M->content.var_name);
+        break;
+        case ABSTR :
+            res = Lambda(M->content.abst.var_name, lambda_copy(M->content.abst.body));
+        break;
+        case APPL :
+            res = Appl(lambda_copy(M->content.appl.applying), lambda_copy(M->content.appl.to));
+        break;
+    }
+    return res;
+}
+
+void print_lambda_term(lambda_term_t* T, int indent, bool shift) {
+    if(T != NULL) {
+        if(shift) { for(int i = 0; i < indent; ++i) { fprintf(stderr, "     "); } }
+        switch(T->type) {
+            case APPL :
+                fprintf(stderr, "@\n");
+                print_lambda_term(T->content.appl.applying, indent + 1, true);
+                fprintf(stderr, "\n");
+                print_lambda_term(T->content.appl.to, indent + 1, true);
+                break;
+            case ABSTR :
+                fprintf(stderr, "^ %s", T->content.abst.var_name);
+                int delta = 1;
+                lambda_term_t* cur = T->content.abst.body;
+                while(cur->type == ABSTR) {
+                    ++delta;
+                    fprintf(stderr, ", %s", cur->content.abst.var_name);
+                    cur = cur->content.abst.body;
+                }
+                fprintf(stderr, ".");
+                print_lambda_term(cur, indent + delta, false);
+                break;
+            case VAR :
+                fprintf(stderr, "%s", T->content.var_name);
+                break;
+        }
     }
 }
 
@@ -103,11 +126,25 @@ lambda_term_t* Y(char* f_name) {
 // Boolean functions
 
 lambda_term_t* lambda_bool(bool b) { // TODO check if it is pertinent to change t and e by fresh variables...
+    char* var1 = malloc(sizeof(char)*4);
+    char* var2 = malloc(sizeof(char)*4);
+    var1[0] = '$';
+    var1[1] = '$';
+    var1[2] = 't';
+    var1[3] = '\0';
+    var2[0] = '$';
+    var2[1] = '$';
+    var2[2] = 'e';
+    var2[3] = '\0';
+    lambda_term_t* res;
     if(b) {
-        return Lambda("t", Lambda("e", Var("t")));
+        res = Lambda(var1, Lambda(var2, Var(var1)));
     } else {
-        return Lambda("t", Lambda("e", Var("e")));
+        res = Lambda(var1, Lambda(var2, Var(var2)));
     }
+    free(var1);
+    free(var2);
+    return res;
 }
 
 lambda_term_t* Not(void) {
@@ -225,7 +262,7 @@ lambda_term_t* PlusZ(lambda_term_t* n, lambda_term_t* m) {
     char* var1 = fresh_var(false);
     char* var2 = fresh_var(false);
     char* var3 = fresh_var(false);
-    lambda_term_t* res = Appl(n, Lambda(var1, Lambda(var2, Lambda(var3, Appl(Appl(Var(var3), PlusN(Var(var1), Appl(lambda_bool(true), m))), PlusN(Var(var2), Appl(lambda_bool(false), m)))))));
+    lambda_term_t* res = Appl(n, Lambda(var1, Lambda(var2, Lambda(var3, Appl(Appl(Var(var3), PlusN(Var(var1), Appl(lambda_bool(true), m))), PlusN(Var(var2), Appl(lambda_bool(false), lambda_copy(m))))))));
     free(var1);
     free(var2);
     free(var3);
@@ -273,7 +310,7 @@ lambda_term_t* DivZ(/*lambda_term_t* n, lambda_term_t* m*/void) { // TODO
 }
 
 lambda_term_t* EqN(lambda_term_t* n, lambda_term_t* m) {
-    return Appl(Appl(Eqz(MinusN(n, m)), Eqz(MinusN(m, n))), lambda_bool(false));
+    return Appl(Appl(Eqz(MinusN(n, m)), Eqz(MinusN(lambda_copy(m), lambda_copy(n)))), lambda_bool(false));
 }
 
 lambda_term_t* LeqN(lambda_term_t* n, lambda_term_t* m) {
@@ -285,7 +322,7 @@ lambda_term_t* EqZ(lambda_term_t* n, lambda_term_t* m) {
     char* var2 = fresh_var(false);
     lambda_term_t* res = Appl(n, Lambda(var1, Lambda(var2, Appl(Appl(Eqz(Var(var1)),
                                                 EqN(Var(var2), Appl(lambda_bool(false), m))), 
-                                                EqN(Var(var1), Appl(lambda_bool(true), m)))
+                                                EqN(Var(var1), Appl(lambda_bool(true), lambda_copy(m))))
                                      )));
     free(var1);
     free(var2);
@@ -298,7 +335,7 @@ lambda_term_t* LeqZ(lambda_term_t* n, lambda_term_t* m) {
     lambda_term_t* res =
     Appl(n, Lambda(var1, Lambda(var2, Appl(Appl(Eqz(Var(var1)),
                                          LeqN(Appl(lambda_bool(true), m), Var(var2))), 
-                                         LeqN(Var(var1), Appl(lambda_bool(false), m))))));
+                                         LeqN(Var(var1), Appl(lambda_bool(false), lambda_copy(m)))))));
     free(var1);
     free(var2);
     return res;
@@ -310,7 +347,7 @@ lambda_term_t* LtZ(lambda_term_t* n, lambda_term_t* m) {
     lambda_term_t* res =
     Appl(n, Lambda(var1, Lambda(var2, Appl(Appl(Eqz(Var(var1)),
                                          LeqN(Appl(Incr(), Appl(lambda_bool(true), m)), Var(var2))), 
-                                         LeqN(Incr_param(var1), Appl(lambda_bool(false), m))))));
+                                         LeqN(Incr_param(var1), Appl(lambda_bool(false), lambda_copy(m)))))));
     free(var1);
     free(var2);
     return res;

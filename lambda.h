@@ -45,6 +45,7 @@ lambda_term_t* Var(char* var_name);
 lambda_term_t* Lambda(char* var_name, lambda_term_t* body);
 lambda_term_t* Appl(lambda_term_t* applying, lambda_term_t* to);
 
+lambda_term_t* lambda_copy(lambda_term_t* M);
 lambda_term_t* code_gen(ml_term_t* parsed_code);
 void free_lambda_term(lambda_term_t* T);
 void print_lambda_term(lambda_term_t* T, int indent, bool shift);

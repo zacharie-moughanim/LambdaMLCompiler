@@ -36,7 +36,13 @@ ml_term_t* Let(ml_term_t* argument, bool is_rec, ml_term_t* val, ml_term_t* in) 
     res->content.declare.is_rec = is_rec;
     switch(argument->type) {
         case VARIABLE :
-            res->content.declare.var_name = argument->content.var_name;
+            res->content.declare.var_name = malloc(sizeof(char)*(strlen(argument->content.var_name) + 1));
+            int i = 0;
+            while(argument->content.var_name[i] != '\0') {
+                res->content.declare.var_name[i] = argument->content.var_name[i];
+                ++i;
+            }
+            res->content.declare.var_name[i] = '\0';
             res->content.declare.val = val;
             res->content.declare.in = in;
         break;
@@ -48,7 +54,13 @@ ml_term_t* Let(ml_term_t* argument, bool is_rec, ml_term_t* val, ml_term_t* in) 
             if(argument->content.cpl.fst->type != VARIABLE) {
                 fprintf(stderr, "Syntax Error : Expected an identifier");
             } else {
-                res->content.declare.var_name = argument->content.cpl.fst->content.var_name;
+                res->content.declare.var_name = malloc(sizeof(char)*(strlen(argument->content.cpl.fst->content.var_name) + 1));
+                int i = 0;
+                while(argument->content.cpl.fst->content.var_name[i] != '\0') {
+                    res->content.declare.var_name[i] = argument->content.cpl.fst->content.var_name[i];
+                    ++i;
+                }
+                res->content.declare.var_name[i] = '\0';
                 if(val->type != COUPLE) {
                     fprintf(stderr, "Syntax Error : Expected a tuple to assign");
                 } else {
@@ -65,9 +77,15 @@ ml_term_t* Let(ml_term_t* argument, bool is_rec, ml_term_t* val, ml_term_t* in) 
             if(argument->content.lst.hd->type != VARIABLE) {
                 fprintf(stderr, "Syntax Error : Expected an identifier");
             } else {
-                res->content.declare.var_name = argument->content.lst.hd->content.var_name;
+                res->content.declare.var_name = malloc(sizeof(char)*(strlen(argument->content.cpl.fst->content.var_name) + 1));
+                int i = 0;
+                while(argument->content.cpl.fst->content.var_name[i] != '\0') {
+                    res->content.declare.var_name[i] = argument->content.cpl.fst->content.var_name[i];
+                    ++i;
+                }
+                res->content.declare.var_name[i] = '\0';
                 if(val->type != LIST) {
-                    fprintf(stderr, "Syntax Error : Expected a tuple to assign");
+                    fprintf(stderr, "Syntax Error : Expected a list to assign");
                 } else {
                     res->content.declare.val = val->content.lst.hd;
                     res->content.declare.in = Let(argument->content.lst.tl, false, val->content.lst.tl, in);
@@ -92,7 +110,13 @@ ml_term_t* Applml(ml_term_t* applying, ml_term_t* to) {
 ml_term_t* Fun(char* var_name, ml_term_t* body) {
     ml_term_t* res = malloc(sizeof(ml_term_t));
     res->type = FUNC;
-    res->content.func.var = var_name;
+    res->content.func.var = malloc(sizeof(char)*(strlen(var_name) + 1));
+    int i = 0;
+    while(var_name[i] != '\0') {
+        res->content.func.var[i] = var_name[i];
+        ++i;
+    }
+    res->content.func.var[i] = '\0';
     res->content.func.body = body;
     return res;
 }    
@@ -305,15 +329,10 @@ void print_ml_term(ml_term_t* term, int indent) {
             print_ml_term(term->content.b_form.rhs, 0);
         break;
         case CONDITION :
-            free_ml_term(term->content.ite.condition);
-            free_ml_term(term->content.ite.body_i);
-            free_ml_term(term->content.ite.body_e);
-            free(term);
+            // TODO
         break;
         case COMPARISON :
-            free_ml_term(term->content.compare.lhs);
-            free_ml_term(term->content.compare.rhs);
-            free(term);
+            // TODO
         break;
         case VARIABLE :
             fprintf(stderr,"%s", term->content.var_name);
@@ -361,6 +380,7 @@ void free_ml_term(ml_term_t* term) {
             free(term);
         break;
         case FUNC :
+            free(term->content.func.var);
             free_ml_term(term->content.func.body);
             free(term);
         break;

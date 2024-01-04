@@ -306,15 +306,18 @@ token_t read_a_word(char* code, trie_t* cur, int start, int* pos) {
         case '&' :
         case '|' :
             if(cur == NULL) { // Then, start != *pos is true.
+                fprintf(stderr, "JSDQLKJLQDFQ : %zd\n\n", (*pos + 1 - start)*sizeof(char));
                 char* id = malloc((*pos + 1 - start)*sizeof(char));
                 for(int i = start; i < *pos; ++i) {
                     id[i - start] = code[i];
                 }
                 id[*pos - start] = '\0';
+                fprintf(stderr, "JSDQLKJLQDFQ : %s\n\n", id);
                 token_t tok = {.key = IDENTIFIER, .val = {.id_name = id}};
                 return tok;
             } else {
                 if(!(cur->final) && start != *pos) {
+                    fprintf(stderr, "JSDQLKJLQDFQ : %zd\n\n", (*pos + 1 - start)*sizeof(char));
                     char* id = malloc((*pos + 1 - start)*sizeof(char));
                     for(int i = start; i < *pos; ++i) {
                         id[i - start] = code[i];
@@ -326,19 +329,14 @@ token_t read_a_word(char* code, trie_t* cur, int start, int* pos) {
                     return read_a_word(code, cur->next[(int)code[(*pos)++] + 128], start, pos);
                 } else {
                     if(cur->ambiguous) {
-                        int* tmp_pos = malloc(sizeof(int));
-                        *tmp_pos = *pos;
-                        token_t ambiguity_test = read_a_word(code, cur->next[(int)code[(*tmp_pos)++] + 128], start, tmp_pos);
-                        switch(ambiguity_test.key) {
-                            case IDENTIFIER :
-                                free(tmp_pos);
-                                return cur->read_token;
-                            break;
-                            default :
-                                *pos = *tmp_pos;
-                                free(tmp_pos);
-                                return ambiguity_test;
-                            break;
+                        int tmp_pos = *pos;
+                        token_t ambiguity_test = read_a_word(code, cur->next[(int)code[tmp_pos++] + 128], start, &tmp_pos);
+                        if(ambiguity_test.key == IDENTIFIER) {
+                            free_token(ambiguity_test);
+                            return cur->read_token;
+                        } else {
+                            *pos = tmp_pos;
+                            return ambiguity_test;
                         }
                     } else {
                         return cur->read_token;

@@ -158,6 +158,7 @@ void incr_pos(token_t* lexed_code, int *pos, int n) {
 ml_term_t* one_parser(token_t* lexed_code, int* pos, int n) {
     if(lexed_code[*pos].key == KEYWORD || lexed_code[*pos].key == OPERATOR || lexed_code[*pos].key == PUNCTUATION) {
         ml_term_t* argument;
+        ml_term_t* res;
         switch(lexed_code[*pos].val.f_val) {
             case LET :
                 incr_pos(lexed_code, pos, n);
@@ -177,15 +178,16 @@ ml_term_t* one_parser(token_t* lexed_code, int* pos, int n) {
                     // read arg
                     ml_term_t* val = parser(lexed_code, pos, n, STOP_IN);
                     ml_term_t* in = parser(lexed_code, pos, n, STOP_SEMICOLON);
-                    ml_term_t* res = Let(argument, is_rec, val, in);
-                    return res;
+                    res = Let(argument, is_rec, val, in);
                 } else {
                     fprintf(stderr, "BONSOIR\n");
                     incr_pos(lexed_code, pos, n);
                     ml_term_t* val = parser(lexed_code, pos, n, STOP_IN);
                     ml_term_t* in = parser(lexed_code, pos, n, STOP_SEMICOLON);
-                    return Let(argument, is_rec, val, in);
+                    res = Let(argument, is_rec, val, in);
+                    free_ml_term(argument);
                 }
+                return res;
             case FUN :
                 incr_pos(lexed_code, pos, n);
                 argument = one_parser(lexed_code, pos, n);
@@ -201,7 +203,8 @@ ml_term_t* one_parser(token_t* lexed_code, int* pos, int n) {
                 }
                 switch(argument->type) {
                     case VARIABLE :
-                        return Fun(argument->content.var_name, body);
+                        res = Fun(argument->content.var_name, body);
+                        free_ml_term(argument);
                     break;
                     case COUPLE : // TODO Take care of declared types
                     case LIST :
@@ -210,12 +213,14 @@ ml_term_t* one_parser(token_t* lexed_code, int* pos, int n) {
                         ml_term_t* val = malloc(sizeof(ml_term_t));
                         val->type = VARIABLE;
                         val->content.var_name = "v";
-                        return Fun("v", Match(val, args, bodys));
+                        res = Fun("v", Match(val, args, bodys));
                     break;
                     default :
                         fprintf(stderr, "Syntax Error : Not a valid argument");
-                        return NULL;
+                        res = NULL;
+                    break;
                 }
+                return res;
             case TYPE :
                 // TODO
                 return NULL;
