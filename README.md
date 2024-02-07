@@ -19,3 +19,7 @@ En cours de développement : prise en compte des flottants.
 ### Lambda Calcul
 On considère ici le lambda-calcul originel :
 L ::= x | M N | λ x. M
+
+## Exécution
+
+./lmlc -o dest_file src_file
