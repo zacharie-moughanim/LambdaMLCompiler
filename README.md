@@ -39,3 +39,5 @@ On considère ici le lambda-calcul originel :
 ## Exécution
 
 `./lmlc -o dest_file src_file`
+
+Le dest_file contient un fichier très facilement parsable par le code caml, l'enchaînement compilateur/interpréteur doit être fait manuellement, des améliorations sont à faire.
