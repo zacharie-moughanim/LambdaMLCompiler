@@ -7,7 +7,7 @@ Le compilateur est entièrement codé en C, et un interpréteur de λ-terme est 
 
 ## Les langages
 
-### Langage objet : Fragment Pur de Caml
+### Langage source : Fragment Pur de Caml
 On considère le fragment du langage Caml suivant :
 ```
 S ::= let x = M in N | M N | fun x -> M | (M, N) | M :: N | [M1;M2;...;Mn]
@@ -20,7 +20,7 @@ S ::= let x = M in N | M N | fun x -> M | (M, N) | M :: N | [M1;M2;...;Mn]
 Dans un premier temps, on souhaiterait implémenter en C une infératrice de types, en effet, on verra plus tard que cela peut éviter beaucoup de bugs qui ne seront pas détéctés, et qui produira des λ-termes qui ne vérifient pas la spécification du programme Caml en entrée.
 On pourrait imaginer prendre en compte les types enregistrements et les types algébriques.
 
-### Langage destination : λ-Calcul
+### Langage objet : λ-Calcul
 Le langage pris en compte est le λ-calcul originel :
 ```
 L ::= x | M N | λ x. M
